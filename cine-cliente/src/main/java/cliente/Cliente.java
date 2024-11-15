@@ -86,7 +86,7 @@ import java.util.Scanner;
                                  "Generated on: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
   
           // Crear la carpeta "database" si no existe
-          File databaseDir = new File("database");
+          File databaseDir = new File("databases/tickets");
           if (!databaseDir.exists()) {
               databaseDir.mkdir();
           }
@@ -94,7 +94,7 @@ import java.util.Scanner;
           // Guardar el boleto en la carpeta "database"
           try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(databaseDir, ticketId + ".txt")))) {
               writer.write(ticketContent);
-              System.out.println("Ticket generated: database/" + ticketId + ".txt");
+              System.out.println("Ticket generated: databases/tickets/" + ticketId + ".txt");
           } catch (IOException e) {
               e.printStackTrace();
           }
