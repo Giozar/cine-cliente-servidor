@@ -26,33 +26,45 @@ public class ClientHandler extends Thread {
         this.functionService = functionService;
     }
 
+    @Override
     public void run() {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
              PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
 
-            out.println("Welcome to the Movie Function System. Enter 'list' to see all functions or a function ID to check availability:");
-            String input = in.readLine();
+            // Recibir nombre y edad del cliente
+            String clientInfo = in.readLine();
+            String[] clientData = clientInfo.split(",");
+            String clientName = clientData[0];
+            int clientAge = Integer.parseInt(clientData[1]);
 
-            if ("list".equalsIgnoreCase(input)) {
-                for (MovieFunction function : functionService.listAllFunctions()) {
-                    out.println(function);
-                }
-            } else {
-                MovieFunction function = functionService.getFunctionById(input);
-                if (function != null) {
-                    out.println("Function Info: " + function);
-                    out.println("Enter seat number to reserve (1-10):");
-                    int seatNumber = Integer.parseInt(in.readLine());
-
-                    if (functionService.reserveSeat(input, seatNumber)) {
-                        out.println("Seat reserved successfully.");
-                    } else {
-                        out.println("Seat not available or out of range.");
-                    }
-                } else {
-                    out.println("Function not found.");
-                }
+            // Mostrar lista de funciones al cliente
+            out.println("Here are the available functions. Enter 'END' when done:");
+            for (MovieFunction function : functionService.listAllFunctions()) {
+                out.println(function);
             }
+            out.println("END");  // Indica al cliente que terminó la lista
+
+            // Recibir selección de función y asiento
+            String functionId = in.readLine();
+            int seatNumber = Integer.parseInt(in.readLine());
+
+            // Intentar reservar el asiento y enviar confirmación o error
+            if (functionService.reserveSeat(functionId, seatNumber)) {
+                MovieFunction function = functionService.getFunctionById(functionId);
+                out.println("Seat reserved successfully.");
+
+                // Enviar detalles para el boleto al cliente
+                String ticketInfo = "Client: " + clientName + ", Age: " + clientAge + "\n" +
+                                    "Movie: " + function.getMovie().getName() + "\n" +
+                                    "Function ID: " + function.getId() + "\n" +
+                                    "DateTime: " + function.getDateTime() + "\n" +
+                                    "Room: " + function.getMovie().getRoom() + "\n" +
+                                    "Seat: " + seatNumber;
+                out.println(ticketInfo);  // Enviar información para generar el boleto
+            } else {
+                out.println("Failed to reserve seat. It may be unavailable.");
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
