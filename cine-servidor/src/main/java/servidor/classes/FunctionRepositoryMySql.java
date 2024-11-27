@@ -54,7 +54,7 @@ public class FunctionRepositoryMySql implements FunctionRepository {
 
     @Override
     public MovieFunction findFunctionById(int id) {
-        System.out.println("Lo intento buscar aca");
+        System.out.println("Se valida la función de la película");
         MovieFunction function = null;
         String query = "SELECT f.function_id, f.function_datetime, f.movie_id, m.title, m.duration, m.genre, m.rating, m.description "
                 +
@@ -92,31 +92,62 @@ public class FunctionRepositoryMySql implements FunctionRepository {
 
     @Override
     public boolean reserveSeat(int functionId, int seatNumber, String clientName, int clientAge) {
-        String checkQuery = "SELECT COUNT(*) FROM reservations WHERE function_id = ? AND seat_number = ?";
+        String checkQuery = "SELECT COUNT(*) FROM reservations WHERE function_id = ? AND seat_number = ? FOR UPDATE";
         String insertQuery = "INSERT INTO reservations (function_id, seat_number, client_name, client_age) VALUES (?, ?, ?, ?)";
 
-        try (PreparedStatement checkStmt = connection.prepareStatement(checkQuery)) {
-            checkStmt.setInt(1, functionId);
-            checkStmt.setInt(2, seatNumber);
+        try {
+            // Desactivar el auto-commit
+            connection.setAutoCommit(false);
 
-            try (ResultSet rs = checkStmt.executeQuery()) {
-                if (rs.next() && rs.getInt(1) > 0) {
-                    return false; // El asiento ya está reservado
+            // Bloquear la fila para evitar condiciones de carrera
+            try (PreparedStatement checkStmt = connection.prepareStatement(checkQuery)) {
+                checkStmt.setInt(1, functionId);
+                checkStmt.setInt(2, seatNumber);
+
+                try (ResultSet rs = checkStmt.executeQuery()) {
+                    rs.next();
+                    if (rs.getInt(1) > 0) {
+                        // El asiento ya está reservado
+                        connection.rollback();
+                        return false;
+                    }
                 }
             }
 
+            // Insertar la reserva
             try (PreparedStatement insertStmt = connection.prepareStatement(insertQuery)) {
                 insertStmt.setInt(1, functionId);
                 insertStmt.setInt(2, seatNumber);
                 insertStmt.setString(3, clientName);
                 insertStmt.setInt(4, clientAge);
                 int rowsAffected = insertStmt.executeUpdate();
-                return rowsAffected > 0;
+
+                if (rowsAffected > 0) {
+                    // Confirmar la transacción
+                    connection.commit();
+                    return true;
+                } else {
+                    // Si no se pudo insertar, revertir
+                    connection.rollback();
+                    return false;
+                }
             }
         } catch (SQLException e) {
             System.err.println("Error al reservar el asiento: " + e.getMessage());
-            e.printStackTrace();
+            try {
+                // Revertir en caso de error
+                connection.rollback();
+            } catch (SQLException rollbackEx) {
+                System.err.println("Error al hacer rollback: " + rollbackEx.getMessage());
+            }
             return false;
+        } finally {
+            try {
+                // Restaurar el auto-commit
+                connection.setAutoCommit(true);
+            } catch (SQLException ex) {
+                System.err.println("Error al restaurar el auto-commit: " + ex.getMessage());
+            }
         }
     }
 

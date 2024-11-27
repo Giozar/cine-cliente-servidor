@@ -78,8 +78,6 @@ public class ClientHandler extends Thread {
             // Intentar reservar el asiento
             boolean seatReserved = functionService.reserveSeat(functionId, seatNumber, clientName, clientAge);
 
-            System.out.println(seatReserved);
-
             if (seatReserved) {
                 System.out.println("Si se reservó el asiento");
                 out.println("Asiento reservado con éxito.");
@@ -90,6 +88,7 @@ public class ClientHandler extends Thread {
                 out.println(ticketInfo);
             } else {
                 out.println("El asiento no está disponible.");
+                System.out.println("El asiento no se reservó");
             }
     
         } catch (IOException e) {

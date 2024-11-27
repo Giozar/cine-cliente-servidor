@@ -20,13 +20,12 @@ public class FunctionService {
     }
 
     public boolean reserveSeat(int functionId, int seatNumber, String clientName, int clientAge) {
-        System.out.println("entro aquí");
+        System.out.println("Cliente " +  clientName + "Está en proceso de reserva");
         MovieFunction function = functionRepository.findFunctionById(functionId);
         if (function == null) {
             System.out.println("Función no encontrada.");
             return false;
         }
-        System.out.println("llego aquí");
         return functionRepository.reserveSeat(functionId, seatNumber, clientName, clientAge);
     }
     
