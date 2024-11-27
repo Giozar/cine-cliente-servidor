@@ -26,6 +26,7 @@ public class FunctionService {
             System.out.println("Función no encontrada.");
             return false;
         }
+        System.out.println("llego aquí");
         return functionRepository.reserveSeat(functionId, seatNumber, clientName, clientAge);
     }
     

@@ -54,6 +54,7 @@ public class FunctionRepositoryMySql implements FunctionRepository {
 
     @Override
     public MovieFunction findFunctionById(int id) {
+        System.out.println("Lo intento buscar aca");
         MovieFunction function = null;
         String query = "SELECT f.function_id, f.function_datetime, f.movie_id, m.title, m.duration, m.genre, m.rating, m.description "
                 +

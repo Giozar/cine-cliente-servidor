@@ -54,6 +54,11 @@ public class Cliente {
                 return; // Terminar si la función no es válida
             }
 
+            // Leer el mensaje del servidor solicitando el número de asiento
+            in.readLine();
+
+
+            // Solicitar al cliente el número de asiento
             int seatNumber = getSeatNumber(scanner);
             out.println(seatNumber);
 

@@ -77,7 +77,11 @@ public class ClientHandler extends Thread {
     
             // Intentar reservar el asiento
             boolean seatReserved = functionService.reserveSeat(functionId, seatNumber, clientName, clientAge);
+
+            System.out.println(seatReserved);
+
             if (seatReserved) {
+                System.out.println("Si se reservó el asiento");
                 out.println("Asiento reservado con éxito.");
                 // Enviar detalles del boleto
                 String ticketInfo = "Cliente: " + clientName + ", Edad: " + clientAge + "\n" +
