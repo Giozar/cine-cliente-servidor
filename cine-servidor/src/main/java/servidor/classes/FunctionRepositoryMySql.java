@@ -20,12 +20,13 @@ public class FunctionRepositoryMySql implements FunctionRepository {
     @Override
     public List<MovieFunction> getAllFunctions() {
         List<MovieFunction> functions = new ArrayList<>();
-        String query = "SELECT f.function_id, f.function_datetime, f.movie_id, m.title, m.duration, m.genre, m.rating, m.description " +
-                       "FROM functions f " +
-                       "JOIN movies m ON f.movie_id = m.movie_id";
+        String query = "SELECT f.function_id, f.function_datetime, f.movie_id, m.title, m.duration, m.genre, m.rating, m.description "
+                +
+                "FROM functions f " +
+                "JOIN movies m ON f.movie_id = m.movie_id";
 
         try (PreparedStatement stmt = connection.prepareStatement(query);
-             ResultSet rs = stmt.executeQuery()) {
+                ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 int functionId = rs.getInt("function_id");
@@ -33,13 +34,12 @@ public class FunctionRepositoryMySql implements FunctionRepository {
 
                 // Crear el objeto Movie desde los datos de la base de datos
                 Movie movie = new Movie(
-                    rs.getInt("movie_id"),
-                    rs.getString("title"),
-                    rs.getInt("duration"),
-                    rs.getString("genre"),
-                    rs.getString("rating"),
-                    rs.getString("description")
-                );
+                        rs.getInt("movie_id"),
+                        rs.getString("title"),
+                        rs.getInt("duration"),
+                        rs.getString("genre"),
+                        rs.getString("rating"),
+                        rs.getString("description"));
 
                 // Crear el objeto MovieFunction y agregarlo a la lista
                 functions.add(new MovieFunction(functionId, dateTime, movie));
@@ -55,10 +55,11 @@ public class FunctionRepositoryMySql implements FunctionRepository {
     @Override
     public MovieFunction findFunctionById(int id) {
         MovieFunction function = null;
-        String query = "SELECT f.function_id, f.function_datetime, f.movie_id, m.title, m.duration, m.genre, m.rating, m.description " +
-                       "FROM functions f " +
-                       "JOIN movies m ON f.movie_id = m.movie_id " +
-                       "WHERE f.function_id = ?";
+        String query = "SELECT f.function_id, f.function_datetime, f.movie_id, m.title, m.duration, m.genre, m.rating, m.description "
+                +
+                "FROM functions f " +
+                "JOIN movies m ON f.movie_id = m.movie_id " +
+                "WHERE f.function_id = ?";
 
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setInt(1, id);
@@ -69,13 +70,12 @@ public class FunctionRepositoryMySql implements FunctionRepository {
 
                     // Crear el objeto Movie desde los datos de la base de datos
                     Movie movie = new Movie(
-                        rs.getInt("movie_id"),
-                        rs.getString("title"),
-                        rs.getInt("duration"),
-                        rs.getString("genre"),
-                        rs.getString("rating"),
-                        rs.getString("description")
-                    );
+                            rs.getInt("movie_id"),
+                            rs.getString("title"),
+                            rs.getInt("duration"),
+                            rs.getString("genre"),
+                            rs.getString("rating"),
+                            rs.getString("description"));
 
                     // Crear el objeto MovieFunction
                     function = new MovieFunction(id, dateTime, movie);
@@ -90,9 +90,9 @@ public class FunctionRepositoryMySql implements FunctionRepository {
     }
 
     @Override
-    public boolean reserveSeat(int functionId, int seatNumber) {
+    public boolean reserveSeat(int functionId, int seatNumber, String clientName, int clientAge) {
         String checkQuery = "SELECT COUNT(*) FROM reservations WHERE function_id = ? AND seat_number = ?";
-        String insertQuery = "INSERT INTO reservations (function_id, seat_number) VALUES (?, ?)";
+        String insertQuery = "INSERT INTO reservations (function_id, seat_number, client_name, client_age) VALUES (?, ?, ?, ?)";
 
         try (PreparedStatement checkStmt = connection.prepareStatement(checkQuery)) {
             checkStmt.setInt(1, functionId);
@@ -107,6 +107,8 @@ public class FunctionRepositoryMySql implements FunctionRepository {
             try (PreparedStatement insertStmt = connection.prepareStatement(insertQuery)) {
                 insertStmt.setInt(1, functionId);
                 insertStmt.setInt(2, seatNumber);
+                insertStmt.setString(3, clientName);
+                insertStmt.setInt(4, clientAge);
                 int rowsAffected = insertStmt.executeUpdate();
                 return rowsAffected > 0;
             }
@@ -116,4 +118,5 @@ public class FunctionRepositoryMySql implements FunctionRepository {
             return false;
         }
     }
+
 }
