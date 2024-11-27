@@ -74,3 +74,17 @@ INSERT INTO functions (movie_id, room_id, function_datetime) VALUES
 (8, 3, '2024-12-04 17:00:00'),
 (9, 4, '2024-12-05 19:30:00'),
 (10, 5, '2024-12-05 20:45:00');
+
+
+
+SELECT * FROM movies;
+
+SELECT * FROM rooms;
+
+SELECT * FROM functions;
+
+SELECT * FROM reservations;
+
+SELECT * FROM movies;
+
+
