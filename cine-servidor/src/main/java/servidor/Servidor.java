@@ -26,7 +26,7 @@ public class Servidor {
 
     public static void initSQL(){
         // Configuración de la base de datos
-        String url = "jdbc:mysql://localhost:3306/cinema?useSSL=false&serverTimezone=UTC";
+        String url = "jdbc:mysql://localhost:3306/cinema?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
         String username = "root";
         String password = "root";
 
