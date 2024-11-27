@@ -8,14 +8,20 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.ConnectException;
+import java.net.SocketException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
 public class Cliente {
-    private static final String SERVER_ADDRESS = "localhost";
-    private static final int SERVER_PORT = 1234;
+    private static final String PRIMARY_SERVER_ADDRESS = "localhost";
+    private static final int PRIMARY_SERVER_PORT = 1234;
+    private static final String SECONDARY_SERVER_ADDRESS = "localhost"; // Cambia esto si el secundario está en otro host
+    private static final int SECONDARY_SERVER_PORT = 1235; // Puerto diferente para el servidor secundario
+    private static final int MAX_RETRIES = 4; // Número máximo de intentos de reconexión
+
     private String clientName;
     private int clientAge;
 
@@ -24,10 +30,39 @@ public class Cliente {
     }
 
     public void start() {
-        try (Socket socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
-                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                Scanner scanner = new Scanner(System.in)) {
+        boolean success = false;
+        int retries = 0;
+        String currentServer = "primary"; // Comenzamos con el servidor primario
+
+        while (!success && retries < MAX_RETRIES) {
+            try {
+                // Intentar realizar la reserva
+                performReservation(currentServer);
+                success = true;
+            } catch (IOException e) {
+                System.err.println("Se perdió la conexión con el servidor (" + currentServer + "): " + e.getMessage());
+                retries++;
+                // Alternar entre servidores
+                currentServer = currentServer.equals("primary") ? "secondary" : "primary";
+                System.err.println("Intentando reconectar al servidor " + currentServer + "...");
+            }
+        }
+
+        if (!success) {
+            System.out.println("No se pudo establecer conexión con ningún servidor. Por favor, intente más tarde.");
+        }
+    }
+
+    private void performReservation(String server) throws IOException {
+        Socket socket = null;
+        BufferedReader in = null;
+        PrintWriter out = null;
+
+        try {
+            socket = connectToServer(server);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = new PrintWriter(socket.getOutputStream(), true);
+            Scanner scanner = new Scanner(System.in);
 
             // Solicitar datos del cliente
             clientName = getClientName(scanner);
@@ -39,8 +74,13 @@ public class Cliente {
             // Leer y mostrar la lista de funciones
             System.out.println("Funciones disponibles:");
             String response;
-            while (!(response = in.readLine()).equals("END")) {
+            while ((response = in.readLine()) != null && !response.equals("END")) {
                 System.out.println(response);
+            }
+
+            // Verificar si la conexión se perdió
+            if (response == null) {
+                throw new SocketException("Conexión cerrada por el servidor.");
             }
 
             // Solicitar al cliente la selección de función
@@ -49,14 +89,21 @@ public class Cliente {
 
             // Leer respuesta de validación del servidor
             String functionValidation = in.readLine();
+            if (functionValidation == null) {
+                throw new SocketException("Conexión cerrada por el servidor.");
+            }
             if (!functionValidation.equals("OK")) {
                 System.out.println(functionValidation);
                 return; // Terminar si la función no es válida
             }
 
             // Leer el mensaje del servidor solicitando el número de asiento
-            in.readLine();
-
+            String seatPrompt = in.readLine();
+            
+            if (seatPrompt == null) {
+                throw new SocketException("Conexión cerrada por el servidor.");
+            }
+            
 
             // Solicitar al cliente el número de asiento
             int seatNumber = getSeatNumber(scanner);
@@ -64,17 +111,50 @@ public class Cliente {
 
             // Leer respuesta de confirmación del servidor
             String confirmation = in.readLine();
+            if (confirmation == null) {
+                throw new SocketException("Conexión cerrada por el servidor.");
+            }
             System.out.println(confirmation);
             if (confirmation.equals("Asiento reservado con éxito.")) {
                 // Leer información del boleto
                 String ticketInfo = in.readLine();
+                if (ticketInfo == null) {
+                    throw new SocketException("Conexión cerrada por el servidor.");
+                }
                 generateTicket(ticketInfo, functionId, seatNumber);
             }
 
-        } catch (IOException e) {
-            System.err.println("Error al conectarse al servidor: " + e.getMessage());
-            e.printStackTrace();
+        } finally {
+            // Cerrar recursos
+            if (out != null) out.close();
+            if (in != null) in.close();
+            if (socket != null && !socket.isClosed()) socket.close();
         }
+    }
+
+    private Socket connectToServer(String server) throws IOException {
+        Socket socket = null;
+        String address;
+        int port;
+
+        if (server.equals("primary")) {
+            address = PRIMARY_SERVER_ADDRESS;
+            port = PRIMARY_SERVER_PORT;
+        } else {
+            address = SECONDARY_SERVER_ADDRESS;
+            port = SECONDARY_SERVER_PORT;
+        }
+
+        try {
+            // Intentar conectar al servidor especificado
+            socket = new Socket(address, port);
+            System.out.println("Conectado al servidor " + server + ".");
+        } catch (IOException e) {
+            System.err.println("Servidor " + server + " no disponible.");
+            throw e; // Propagar la excepción para manejarla en el método start()
+        }
+
+        return socket;
     }
 
     private String getClientName(Scanner scanner) {
@@ -166,8 +246,7 @@ public class Cliente {
         // Guardar el boleto en la carpeta "databases/tickets"
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(databaseDir, ticketId + ".txt")))) {
             writer.write(ticketContent);
-            System.out
-                    .println("Boleto generado: " + databaseDir.getAbsolutePath() + File.separator + ticketId + ".txt");
+            System.out.println("Boleto generado: " + databaseDir.getAbsolutePath() + File.separator + ticketId + ".txt");
         } catch (IOException e) {
             System.err.println("Error al guardar el boleto: " + e.getMessage());
             e.printStackTrace();
