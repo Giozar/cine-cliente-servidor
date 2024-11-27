@@ -1,19 +1,23 @@
 package servidor.classes;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
-import servidor.services.FunctionService;
+import java.sql.Connection;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import servidor.services.*;
 
 public class ClientHandler extends Thread {
     private Socket clientSocket;
     private FunctionService functionService;
+    private RoomService roomService;
+    private static ConcurrentMap<Integer, Set<Integer>> lockedSeats = new ConcurrentHashMap<>();
 
-    public ClientHandler(Socket clientSocket, FunctionService functionService) {
+    public ClientHandler(Socket clientSocket, FunctionService functionService, RoomService roomService) {
         this.clientSocket = clientSocket;
         this.functionService = functionService;
+        this.roomService = roomService;
     }
 
     @Override
