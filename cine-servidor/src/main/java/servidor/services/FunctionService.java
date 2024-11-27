@@ -1,18 +1,8 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-
 package servidor.services;
-
-/**
- *
- * @author giozar
- */
-import java.util.List;
 
 import servidor.classes.MovieFunction;
 import servidor.interfaces.FunctionRepository;
+import java.util.List;
 
 public class FunctionService {
     private FunctionRepository functionRepository;
@@ -25,12 +15,16 @@ public class FunctionService {
         return functionRepository.getAllFunctions();
     }
 
-    public MovieFunction getFunctionById(String id) {
+    public MovieFunction getFunctionById(int id) {
         return functionRepository.findFunctionById(id);
     }
 
-    public boolean reserveSeat(String functionId, int seatNumber) {
+    public boolean reserveSeat(int functionId, int seatNumber) {
         MovieFunction function = functionRepository.findFunctionById(functionId);
-        return function != null && function.reserveSeat(seatNumber);
+        if (function == null) {
+            System.out.println("Función no encontrada.");
+            return false;
+        }
+        return functionRepository.reserveSeat(functionId, seatNumber);
     }
 }

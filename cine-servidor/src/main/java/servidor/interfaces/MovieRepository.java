@@ -15,5 +15,5 @@ import servidor.classes.Movie;
 
 public interface MovieRepository {
     List<Movie> getAllMovies();
-    Movie findMovieById(String id);
+    Movie findMovieById(int id);
 }

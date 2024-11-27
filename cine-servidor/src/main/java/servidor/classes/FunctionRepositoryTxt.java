@@ -1,14 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-
 package servidor.classes;
 
-/**
- *
- * @author giozar
- */
+import servidor.interfaces.FunctionRepository;
+import servidor.interfaces.MovieRepository;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -16,14 +9,12 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-
-import servidor.interfaces.FunctionRepository;
-import servidor.interfaces.MovieRepository;
+import java.util.Optional;
 
 public class FunctionRepositoryTxt implements FunctionRepository {
     private List<MovieFunction> functions;
     private MovieRepository movieRepository;
-    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public FunctionRepositoryTxt(String filePath, MovieRepository movieRepository) {
         this.movieRepository = movieRepository;
@@ -35,19 +26,28 @@ public class FunctionRepositoryTxt implements FunctionRepository {
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = br.readLine()) != null) {
+                // Suponiendo que el formato es: functionId,movieId,function_datetime
                 String[] data = line.split(",");
-                String functionId = data[0];
-                String movieId = data[1];
-                LocalDateTime dateTime = LocalDateTime.parse(data[2], formatter);
-                
-                // Buscar la película en el repositorio de películas
-                Movie movie = movieRepository.findMovieById(movieId);
-                if (movie != null) {
-                    functions.add(new MovieFunction(functionId, dateTime, movie));
+                if (data.length >= 3) {
+                    int functionId = Integer.parseInt(data[0]);
+                    int movieId = Integer.parseInt(data[1]);
+                    LocalDateTime dateTime = LocalDateTime.parse(data[2], formatter);
+
+                    // Buscar la película en el repositorio de películas
+                    Movie movie = movieRepository.findMovieById(movieId);
+                    if (movie != null) {
+                        functions.add(new MovieFunction(functionId, dateTime, movie));
+                    } else {
+                        System.err.println("Película no encontrada con ID: " + movieId);
+                    }
+                } else {
+                    System.err.println("Formato incorrecto en la línea: " + line);
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (NumberFormatException | java.time.format.DateTimeParseException e) {
+            System.err.println("Error al parsear datos: " + e.getMessage());
         }
     }
 
@@ -57,7 +57,16 @@ public class FunctionRepositoryTxt implements FunctionRepository {
     }
 
     @Override
-    public MovieFunction findFunctionById(String id) {
-        return functions.stream().filter(function -> function.getId().equals(id)).findFirst().orElse(null);
+    public MovieFunction findFunctionById(int id) {
+        Optional<MovieFunction> function = functions.stream()
+                .filter(f -> f.getId() == id)
+                .findFirst();
+        return function.orElse(null);
+    }
+
+    @Override
+    public boolean reserveSeat(int functionId, int seatNumber) {
+        // Implementación vacía o lógica según sea necesario
+        return false;
     }
 }

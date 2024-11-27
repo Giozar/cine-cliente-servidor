@@ -6,44 +6,59 @@
  package servidor.classes;
 
  /**
-  *
+  * Clase Movie representa una película en el sistema.
+  * Incluye información de la base de datos como id, título, duración, género, calificación, y descripción.
+  * 
   * @author giozar
   */
  public class Movie {
-     private String id;
-     private String name;
-     private int room;
-     private int[] seats;
+     private int id;           // ID único de la película
+     private String title;     // Título de la película
+     private int duration;     // Duración en minutos
+     private String genre;     // Género de la película
+     private String rating;    // Clasificación (PG, PG-13, etc.)
+     private String description; // Breve descripción
  
-     public Movie(String id, String name, int room) {
+     // Constructor
+     public Movie(int id, String title, int duration, String genre, String rating, String description) {
          this.id = id;
-         this.name = name;
-         this.room = room;
-         this.seats = new int[10]; // Arreglo de asientos (0 = disponible, 1 = ocupado)
+         this.title = title;
+         this.duration = duration;
+         this.genre = genre;
+         this.rating = rating;
+         this.description = description;
      }
  
-     public String getId() { return id; }
-     public String getName() { return name; }
-     public int getRoom() { return room; }
- 
-     public boolean reserveSeat(int seatNumber) {
-         if (seatNumber < 1 || seatNumber > 10 || seats[seatNumber - 1] == 1) {
-             return false; // Asiento no disponible
-         }
-         seats[seatNumber - 1] = 1;
-         return true; // Asiento reservado
+     // Getters
+     public int getId() {
+         return id;
      }
  
-     public boolean hasAvailableSeats() {
-         for (int seat : seats) {
-             if (seat == 0) return true;
-         }
-         return false;
+     public String getTitle() {
+         return title;
      }
  
+     public int getDuration() {
+         return duration;
+     }
+ 
+     public String getGenre() {
+         return genre;
+     }
+ 
+     public String getRating() {
+         return rating;
+     }
+ 
+     public String getDescription() {
+         return description;
+     }
+ 
+     // Método toString para mostrar información de la película
      @Override
      public String toString() {
-         return "ID: " + id + ", Nombre: " + name + ", Sala: " + room + ", Disponibilidad: " + (hasAvailableSeats() ? "Sí" : "No");
+         return "ID: " + id + ", Título: " + title + ", Duración: " + duration + " min, Género: " + genre +
+                ", Clasificación: " + rating + ", Descripción: " + description;
      }
  }
  
