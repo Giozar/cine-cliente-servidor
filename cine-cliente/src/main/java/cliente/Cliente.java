@@ -19,6 +19,7 @@
  import java.time.LocalDateTime;
  import java.time.format.DateTimeFormatter;
  import java.util.Scanner;
+import java.util.regex.Pattern;
  
  public class Cliente {
      private static final String SERVER_ADDRESS = "localhost";
@@ -38,9 +39,10 @@
  
              // Solicitar datos del cliente
              System.out.println("Ingrese su nombre:");
-             clientName = scanner.nextLine();
+             clientName = getClientName(scanner);
              System.out.println("Ingrese su edad:");
-             clientAge = Integer.parseInt(scanner.nextLine());
+             clientAge = getClientAge(scanner);
+             //clientAge = Integer.parseInt(scanner.nextLine());
  
              // Enviar datos del cliente al servidor
              out.println(clientName + "," + clientAge);
@@ -73,9 +75,40 @@
                  System.out.println(confirmation);
              }
          } catch (IOException e) {
+             System.err.println("Error al conectarse al servidor: " + e.getMessage());
              e.printStackTrace();
          }
      }
+ 
+     private String getClientName(Scanner scanner) {
+        String name;
+        while (true) {
+            System.out.println("Ingrese su nombre (solo letras):");
+            name = scanner.nextLine();
+            // Validar que el nombre solo contenga letras
+            if (Pattern.matches("[a-zA-Z]+", name)) { // Uso de expresion Regular
+                break;
+            }
+        }
+        return name;
+    }
+     
+     private int getClientAge(Scanner scanner) {
+        int age;
+        while (true) {
+            try {
+                age = Integer.parseInt(scanner.nextLine());
+                if (age >= 18 && age <= 66) {
+                    break;
+                } else {
+                    System.out.println(" Debe ser mayor de edad.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println(" Ingrese un número válido.");
+            }
+        }
+        return age;
+    }
  
      private void generateTicket(String ticketInfo, String functionId, int seatNumber) {
          String ticketId = clientName + "-" + functionId + "-" + seatNumber;
@@ -83,19 +116,21 @@
                                 "ID: " + ticketId + "\n" +
                                 "Nombre: " + clientName + "\n" +
                                 ticketInfo + "\n" +
-                                "Generado en: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                                "Generado el: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
  
-         // Crear la carpeta "database" si no existe
-         File databaseDir = new File("databases/tickets");
-         if (!databaseDir.exists()) {
-             databaseDir.mkdir();
-         }
+        File databaseDir = new File("databases" + File.separator + "tickets");
+        if (!databaseDir.exists() && !databaseDir.mkdirs()) {
+            System.err.println("No se pudo crear el directorio para guardar los boletos.");
+            return;
+        }
  
          // Guardar el boleto en la carpeta "database"
          try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(databaseDir, ticketId + ".txt")))) {
              writer.write(ticketContent);
-             System.out.println("Boleto generado: databases/tickets/" + ticketId + ".txt");
+              System.out.println("Boleto generado: " + databaseDir.getAbsolutePath() + File.separator + ticketId + ".txt");
+             //System.out.println("Boleto generado: databases/tickets/" + ticketId + ".txt");
          } catch (IOException e) {
+             System.err.println("Error al guardar el boleto: " + e.getMessage());
              e.printStackTrace();
          }
      }
